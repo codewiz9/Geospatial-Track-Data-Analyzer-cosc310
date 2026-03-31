@@ -108,82 +108,51 @@ public class searching {
         return binarySearch(haystack, 0, haystack.size()-1, minNeedle, maxNeedle);
     }
 
-    public ArrayList<BikeDataRecord> binarySearch(ArrayList<BikeDataRecord> haystack, int start, int end, int needle, int index) {
-        if (start <= end) {
-            int mid = (start + end) / 2;
-            int val;
-            BikeDataRecord r = haystack.get(mid);
-            switch (index) {
-                case 2: val = r.getHeartrate(); break;
-                case 7: val = r.getPow(); break;
-                case 8: val = r.getCad(); break;
-                case 9: val = r.getDegC(); break;
-                default: val = 0;
-            }
-            if (val == needle) {
-                ArrayList<BikeDataRecord> hits = new ArrayList<>();
-                hits.add(r);
-                // look left
-                int i = mid-1;
-                if (i>=0) {
-                    r = haystack.get(i);
-                    switch (index) {
-                        case 2: val = r.getHeartrate(); break;
-                        case 7: val = r.getPow(); break;
-                        case 8: val = r.getCad(); break;
-                        case 9: val = r.getDegC(); break;
-                        default: val = 0;
-                    }
-                }
-                while (i>=0 && val==needle) {
-                    hits.add(r);
-                    i--;
-                    if (i>=0) {
-                        r = haystack.get(i);
-                        switch (index) {
-                            case 2: val = r.getHeartrate(); break;
-                            case 7: val = r.getPow(); break;
-                            case 8: val = r.getCad(); break;
-                            case 9: val = r.getDegC(); break;
-                            default: val = 0;
-                        }
-                    }
-                }
-                // look right
-                i = mid+1;
-                if (i<haystack.size()) {
-                    r = haystack.get(i);
-                    switch (index) {
-                        case 2: val = r.getHeartrate(); break;
-                        case 7: val = r.getPow(); break;
-                        case 8: val = r.getCad(); break;
-                        case 9: val = r.getDegC(); break;
-                        default: val = 0;
-                    }
-                }
-                 while (i<haystack.size() && val==needle) {
-                    hits.add(r);
-                    i++;
-                    if (i<haystack.size()) {
-                        r = haystack.get(i);
-                        switch (index) {
-                            case 2: val = r.getHeartrate(); break;
-                            case 7: val = r.getPow(); break;
-                            case 8: val = r.getCad(); break;
-                            case 9: val = r.getDegC(); break;
-                            default: val = 0;
-                        }
-                    }
-                }
-                return hits;
-            } else if (val > needle) {
-                return binarySearch(haystack, start, mid-1, needle, index);
-            } else {
-                return binarySearch(haystack, mid+1, end, needle, index);
-            }
-        } else {
-            return new ArrayList<>(); // not found
+    private int getValueForIndex(BikeDataRecord r, int index) {
+        switch (index) {
+            case 2: return r.getHeartrate();
+            case 7: return r.getPow();
+            case 8: return r.getCad();
+            case 9: return r.getDegC();
+            default: return Integer.MIN_VALUE;
         }
+    }
+
+    // Returns all records where field value >= needle.
+    // haystack must already be sorted by the same index field.
+    public ArrayList<BikeDataRecord> binarySearch(ArrayList<BikeDataRecord> haystack, int start, int end, int needle, int index) {
+        ArrayList<BikeDataRecord> hits = new ArrayList<>();
+        if (haystack.isEmpty() || start > end) {
+            return hits;
+        }
+
+        int low = Math.max(0, start);
+        int high = Math.min(end, haystack.size() - 1);
+        int firstAtOrAbove = -1;
+
+        // lower_bound: first position with value >= needle
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            int val = getValueForIndex(haystack.get(mid), index);
+            if (val >= needle) {
+                firstAtOrAbove = mid;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (firstAtOrAbove == -1) {
+            return hits;
+        }
+
+        for (int i = firstAtOrAbove; i <= end && i < haystack.size(); i++) {
+            BikeDataRecord r = haystack.get(i);
+            if (getValueForIndex(r, index) >= needle) {
+                hits.add(r);
+            }
+        }
+        return hits;
     }
 
     public ArrayList<BikeDataRecord> binarySearch(ArrayList<BikeDataRecord> haystack, int needle, int index) {
